@@ -1,5 +1,6 @@
 using UnityEngine;
 using System;
+using Unity.VisualScripting;
 
 namespace Grid
 {
@@ -8,6 +9,8 @@ namespace Grid
     {
         [SerializeField]
         private GameObject punteroHexagonal;
+        [SerializeField]
+        private EnemyLocationController enemyLocationController;
         private ObjectPlacer objectPlacer;
         private string este = ";";
 
@@ -23,7 +26,7 @@ namespace Grid
 
         public void UpdatePointerPosition()
         {
-            //Calcúla las posiciones convirtiendolas en pixeles hexagonales
+            //Calcï¿½la las posiciones convirtiendolas en pixeles hexagonales
             Vector2 PosisionDeRaton = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             Vector2 axial = HexTile.WorldToHexGridPosition(PosisionDeRaton, objectPlacer.radio);
             Vector3 Redondeo = HexTile.RoundHexPosition(axial);
@@ -34,7 +37,7 @@ namespace Grid
             //Activa y descativa el Puntero
             string TipoDeTile = objectPlacer.GetTileTypeAtPosition(NuevaPosision).ToString();
             ActualizarTipoDeTile(TipoDeTile);
-            bool isGround = TipoDeTile == "GROUND";
+            bool isGround = TipoDeTile == "GROUND" && !enemyLocationController.IsEnemyInCell(new Vector2Int((int)Redondeo.x, (int)Redondeo.z));
             Puntero(isGround);
 
         }

@@ -7,14 +7,23 @@ public class PlayerPathfinder : MonoBehaviour
     [SerializeField] private GameObject playerObject;
     [SerializeField] private GameObject destinationMarker;
     [SerializeField] private ObjectPlacer objectPlacer;
-    [SerializeField] private Vector2Int playerPosition;
-    private List<Vector2Int> currentPath = new List<Vector2Int>();
-    private Coroutine pathFollowingCoroutine; // Coroutine para seguir la ruta
     [SerializeField] Vector2Int initPositionPlayer = new(0, 0);
+    [SerializeField] private EnemyLocationController enemyLocationController;
+
+    private List<Vector2Int> currentPath = new List<Vector2Int>();
+    private Vector2Int playerPosition;
+    private Coroutine pathFollowingCoroutine;
 
     private void Start()
     {
-        playerPosition = initPositionPlayer;
+        if (PlayerPrefs.HasKey("playerPositionX") && PlayerPrefs.HasKey("playerPositionY"))
+        {
+            playerPosition = new Vector2Int(PlayerPrefs.GetInt("playerPositionX"), PlayerPrefs.GetInt("playerPositionY"));
+        }
+        else
+        {
+            playerPosition = initPositionPlayer;
+        }
         MovePlayerToTile(playerPosition);
     }
 
@@ -27,27 +36,23 @@ public class PlayerPathfinder : MonoBehaviour
             Vector3 roundedPosition = HexTile.RoundHexPosition(hexPosition);
             Vector2Int destination = new Vector2Int((int)roundedPosition.x, (int)roundedPosition.z);
 
-            // Verificar si el tile seleccionado es GROUND y accesible
             if (IsTileGround(destination))
             {
-                // Si hay una ruta en curso, cancélala
                 if (pathFollowingCoroutine != null)
                 {
                     StopCoroutine(pathFollowingCoroutine);
                 }
 
-                // Calcular la nueva ruta desde la posición actual
                 currentPath = CalculatePath(playerPosition, destination);
 
                 if (currentPath.Count > 0)
                 {
-                    // Mueve el marcador al destino solo si es accesible
                     destinationMarker.transform.position = HexTile.CoordenadasAxis(destination.x, destination.y, objectPlacer.radio);
                     pathFollowingCoroutine = StartCoroutine(FollowPath(currentPath));
                 }
                 else
                 {
-                    Debug.Log("El tile seleccionado es inaccesible desde la posición actual.");
+                    Debug.Log("The destination is not reachable.");
                 }
             }
         }
@@ -57,6 +62,8 @@ public class PlayerPathfinder : MonoBehaviour
     {
         playerObject.transform.position = HexTile.CoordenadasAxis(tilePosition.x, tilePosition.y, objectPlacer.radio);
         playerPosition = tilePosition;
+        PlayerPrefs.SetInt("playerPositionX", playerPosition.x);
+        PlayerPrefs.SetInt("playerPositionY", playerPosition.y);
     }
 
     private List<Vector2Int> CalculatePath(Vector2Int start, Vector2Int end)
@@ -84,7 +91,7 @@ public class PlayerPathfinder : MonoBehaviour
             {
                 if (closedSet.Contains(neighbor)) continue;
 
-                if (IsTileGround(neighbor))
+                if (IsTileGround(neighbor) && !enemyLocationController.IsEnemyInCell(neighbor))
                 {
                     int tentativeGScore = gScore[current] + 1;
 
@@ -99,13 +106,11 @@ public class PlayerPathfinder : MonoBehaviour
             }
         }
 
-        // Retorna una lista vacía si no hay ruta accesible
         return path;
     }
 
     private bool IsTileGround(Vector2Int tile)
     {
-        // Verifica si el tile está dentro de los límites del mapa y es de tipo GROUND
         Vector2 coords = HexTile.CoordenadasAxis(tile.x, tile.y, objectPlacer.radio);
         if (objectPlacer.GetTileTypeAtPosition(coords) == MapLoader.TileType.GROUND)
         {
@@ -116,7 +121,6 @@ public class PlayerPathfinder : MonoBehaviour
 
     private List<Vector2Int> GetHexNeighbors(Vector2Int tile)
     {
-        // Calcula los seis vecinos posibles en la cuadrícula hexagonal
         List<Vector2Int> potentialNeighbors = new List<Vector2Int>
         {
             new Vector2Int(tile.x + 1, tile.y),
@@ -127,7 +131,6 @@ public class PlayerPathfinder : MonoBehaviour
             new Vector2Int(tile.x - 1, tile.y + 1)
         };
 
-        // Filtra los vecinos para incluir solo aquellos que están dentro de los límites del mapa y son GROUND
         List<Vector2Int> validNeighbors = new List<Vector2Int>();
         foreach (var neighbor in potentialNeighbors)
         {

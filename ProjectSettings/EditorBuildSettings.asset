@@ -5,7 +5,10 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 0
-    path: Assets/Scenes/SampleScene.unity
-    guid: 2cda990e2423bbf4892e6590ba056729
+  - enabled: 1
+    path: Assets/Scenes/Juego tablero.unity
+    guid: 340cca7df69e7f246890b94b3c37c31a
+  - enabled: 1
+    path: Assets/Scenes/Cards.unity
+    guid: faf94ba856d9f83409ef4cd591da8399
   m_configObjects: {}
